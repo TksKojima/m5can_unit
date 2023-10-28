@@ -1,0 +1,19 @@
+#ifndef CAN_BUS_UNIT_H
+#define CAN_BUS_UNIT_H
+
+#include <CAN_config.h>
+#include <ESP32CAN.h>
+#include <M5Stack.h>
+#include <M5GFX.h>
+
+
+extern M5GFX display;
+extern M5Canvas canvas;
+
+void canUnit_init();
+void canUnit_rx_loop();
+void canUnit_tx_loop();
+
+
+
+#endif
