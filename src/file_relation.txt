@@ -1,0 +1,22 @@
+CAN Bus Unit
+  CAN.c
+  →　//xSemaphoreTake(sem_tx_complete, portMAX_DELAY);
+	xSemaphoreTake(sem_tx_complete, 10 / portTICK_RATE_MS); //デフォルトだと、送信が完了しない　　　　　とここで待たされる。ミリ秒 / portTICK_RATE_MS　とすると待ち時間が設定できる。
+
+  CAN.h
+  CAN_config.h
+  can_regdef.h
+  ESP32CAN.cpp
+  ESP32CAN.h
+
+
+
+
+Comm Module CAN
+  mcp_can.cpp
+  mcp_can.h
+  mcp_can_dfs.h
+
+
+
+ 

@@ -3,6 +3,8 @@
 
 TFT_eSprite sprite(&M5.Lcd);
 
+
+
 int btnA_cnt = 0;
 int btnB_cnt = 0;
 int btnC_cnt = 0;
@@ -120,9 +122,9 @@ void M5_LCD_loop( int showLCD ){
     // }else{                   sprite.printf(" Wifi Off"); }
     // sprite.printf("\n");
 
-
+    canUnit.M5_CanShowLCD(&sprite);
+    canComm.M5_CanShowLCD(&sprite);
     // main_sensorShow(  &sprite  );
-    // M5_CanShowLCD( &sprite );
 
     sprite.pushSprite(0, 0); 
     

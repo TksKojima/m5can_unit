@@ -28,9 +28,12 @@ M5GFX display;
 M5Canvas canvas(&display);
 
 CanApp canUnit;
-CAN_device_t CAN_cfg;  // CAN Config
+CanApp canComm;
+
+//CAN_device_t CAN_cfg;  // CAN Config
 
 int can_tx_test = 1;
+int can_tx_test2 = 1;
 int can_show_mode = 2;
 
 void setup() {
@@ -50,7 +53,10 @@ void setup() {
 
 
     M5_setup();
-    canUnit.init( CAN_cfg );
+    //canUnit.init( CAN_cfg );
+    //canUnit.init( CanApp::HARD_CANBUS_UNIT );
+    canUnit.init( CanApp::HARD_CANBUS_UNIT );
+    canComm.init( CanApp::HARD_COMM_MODULE );
 
 
 }
@@ -62,11 +68,14 @@ void loop() {
     M5.update(); 
 
     can_tx_test   = M5_getCntBtnA();
+    can_tx_test2   = M5_getCntBtnB();
     can_show_mode = M5_getCntBtnC();
     //can_setTestFlag( can_tx_test , can_show_mode );
-    canUnit.setTestFlag( can_tx_test , can_show_mode );
+    canComm.setTestFlag( can_tx_test , can_show_mode );
+    canUnit.setTestFlag( can_tx_test2 , can_show_mode );
 
     canUnit.loop();
+    canComm.loop();
 
     M5_loop_BtnA(2);
     M5_loop_BtnB(2);
@@ -79,6 +88,8 @@ void loop() {
         LCDflag = 1;
     }
     M5_LCD_loop( LCDflag );
+    //canUnit.M5_CanShowLCD( &sprite );
+
 
     prebBtnC = M5_getCntBtnC();
 

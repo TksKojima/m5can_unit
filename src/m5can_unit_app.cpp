@@ -20,10 +20,16 @@ M5Stack Basci v2.6 Grove
     CAN_cfg.rx_pin_id = GPIO_NUM_22;
 
 */
-#include <Arduino.h>
+
 #include <m5can_unit_app.h>
 
+// Comm
+// for mcp_can
+#define CAN0_INT 15  // Set INT to pin 2
+MCP_CAN CAN0(12);    // Set CS to pin 10
 
+// Unit
+CAN_device_t CAN_cfg;  // CAN Config
 
 void CanApp::Unit_init(){
     CAN_cfg.speed     = CAN_SPEED_1000KBPS; // if use 500kbps , set 1000KBPS BUG
@@ -35,19 +41,43 @@ void CanApp::Unit_init(){
     
 }
 
-void CanApp::init() {
+void CanApp::Comm_init(){
+    // Initialize MCP2515 running at 16MHz with a baudrate of 500kb/s and the
+    // masks and filters disabled.
+    if (CAN0.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) == CAN_OK)
+        Serial.println("MCP2515 Initialized Successfully!");
+    else
+        Serial.println("Error Initializing MCP2515...");
 
-    Unit_init();
+    CAN0.setMode(MCP_NORMAL);  // Change to normal mode to allow messages to be
+                               // transmitted
+
+    pinMode(CAN0_INT, INPUT);  // Configuring pin for /INT input 受信割り込み  
+}
+
+
+
+void CanApp::init( int _hardware) {
+
+    hardware = _hardware;
+
+    if( hardware == HARD_CANBUS_UNIT ){
+      Unit_init();
+    }
+    else if( hardware == HARD_COMM_MODULE ){
+      Comm_init();
+    }
+
     buf_init();
 
 }
 
-void CanApp::init( CAN_device_t _CAN_cfg ) {
+// void CanApp::init( CAN_device_t _CAN_cfg ) {
 
-    CAN_cfg = _CAN_cfg;
-    init();
+//     CAN_cfg = _CAN_cfg;
+//     init();
 
-}
+// }
 
 
 //  tx_test_flagが１だと、テスト用の適当なCANメッセージを送信
@@ -160,18 +190,23 @@ void CanApp::Txbuf_set( int id, char dlc, int cycle, unsigned char *data, int tx
 
 void CanApp::buf_sendSingle( int idx ){
 
+  if( hardware == HARD_COMM_MODULE ){
   // for M5 comm MCP
   //byte sndStat = CAN0.sendMsgBuf(0x100, 0, 8, data);
-  //byte sndStat = CAN0.sendMsgBuf( canbuf[idx].id, 0, canbuf[idx].dlc, canbuf[idx].data.byteData );
-  CAN_frame_t tx_frame;
-  tx_frame.FIR.B.FF   = CAN_frame_std;
-  tx_frame.MsgID      = canbuf[idx].id;
-  tx_frame.FIR.B.DLC  = canbuf[idx].dlc;
-  for( int i=0; i<canbuf[idx].dlc; i++ ){
-    tx_frame.data.u8[i] = canbuf[idx].data.u1[i];
+    byte sndStat = CAN0.sendMsgBuf( canbuf[idx].id, 0, canbuf[idx].dlc, canbuf[idx].data.byteData );
+
   }
-    
-  ESP32Can.CANWriteFrame(&tx_frame);
+  else if( hardware == HARD_CANBUS_UNIT ){
+    CAN_frame_t tx_frame;
+    tx_frame.FIR.B.FF   = CAN_frame_std;
+    tx_frame.MsgID      = canbuf[idx].id;
+    tx_frame.FIR.B.DLC  = canbuf[idx].dlc;
+    for( int i=0; i<canbuf[idx].dlc; i++ ){
+      tx_frame.data.u8[i] = canbuf[idx].data.u1[i];
+    }
+      
+    ESP32Can.CANWriteFrame(&tx_frame);
+  }
 
   // Serial.print("canid: ");
   // Serial.print(id); 
@@ -180,7 +215,10 @@ void CanApp::buf_sendSingle( int idx ){
   // Serial.print(canbuf[id].data.u1[i]);  
 
   if( show_flag == 2 ){
-    Serial.printf("canid: %d  cycle: %d  dlc: %d", canbuf[idx].id, canbuf[idx].cycleTime, (int)(canbuf[idx].dlc));
+    if( hardware == HARD_CANBUS_UNIT ){ Serial.print("Can Unit"); }
+    if( hardware == HARD_COMM_MODULE ){ Serial.print("Can Comm"); }
+
+    Serial.printf(" id: %d  cycle: %d  dlc: %d", canbuf[idx].id, canbuf[idx].cycleTime, (int)(canbuf[idx].dlc));
     for( int n=0; n<canbuf[idx].dlc; n++){
       Serial.printf(" %d", canbuf[idx].data.u1[n]);
 
@@ -227,15 +265,19 @@ void CanApp::buf_recv() {
   CAN_frame_t rx_frame;
 
   //if (!digitalRead(CAN0_INT))  // If CAN0_INT pin is low, read receive buffer
-  if (xQueueReceive(CAN_cfg.rx_queue, &rx_frame, 3 * portTICK_PERIOD_MS) == pdTRUE)
-  {
-      //CAN0.readMsgBuf( &rxId, &len, rxBuf);  // Read data: len = data length, buf = data byte(s)
+  if ( ( hardware == HARD_COMM_MODULE && !digitalRead(CAN0_INT) ) || 
+       ( hardware == HARD_CANBUS_UNIT && xQueueReceive(CAN_cfg.rx_queue, &rx_frame, 3 * portTICK_PERIOD_MS) == pdTRUE ) ){
+      
+      if( hardware == HARD_COMM_MODULE ) {
+        CAN0.readMsgBuf( &rxId, &len, rxBuf);  // Read data: len = data length, buf = data byte(s)
+      }
 
-      rxId = rx_frame.MsgID;
-      len = rx_frame.FIR.B.DLC;
-      for( int i=0; i<len; i++ ){
-        rxBuf[i] = rx_frame.data.u8[i];
-
+      if( hardware == HARD_CANBUS_UNIT ) {
+        rxId = rx_frame.MsgID;
+        len = rx_frame.FIR.B.DLC;
+        for( int i=0; i<len; i++ ){
+          rxBuf[i] = rx_frame.data.u8[i];
+        }
       }
       
       if ((rxId & 0x80000000) == 0x80000000)  // Determine if ID is standard (11 bits) or extended // (29 bits)
@@ -261,6 +303,9 @@ void CanApp::buf_recv() {
         canbuf[rx_idx].txrxFlag = canTxRxFlag::RX;
 
         if( show_flag == 2 ){
+          if( hardware == HARD_CANBUS_UNIT ){ Serial.print("Can Unit"); }
+          if( hardware == HARD_COMM_MODULE ){ Serial.print("Can Comm"); }
+        
           Serial.print("packet with id 0x");
           Serial.print(rx_id, HEX);    //Serial.print(" and length ");
           //Serial.println(packetSize);

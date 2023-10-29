@@ -11,6 +11,7 @@
 //#include <can_bus_unit.h>
 #include <M5Stack.h>
 #include <M5GFX.h>
+#include <mcp_can.h>
 
 
 //#include "ArduinoJson-v6.19.4.h"
@@ -82,12 +83,11 @@ typedef struct CanApp
     // for App
     // Liteî≈ÇÕcanbufÇÃîzóÒêîÇ0x800Ç…ÇπÇ∏ÅA1000à»â∫ÇÆÇÁÇ¢Ç≈â^óp
     //const int bufNum = 200; 
-    canRxBuffer canbuf[200];
-    int bufNum = 200;
+    static const int bufNum = 200;
+    canRxBuffer canbuf[bufNum];
 
     int rx_queue_size = 10;  // Receive Queue size
     
-
     short id2idx_arr[ 0x800 ];
     int now_idx = 0;
 
@@ -97,9 +97,16 @@ typedef struct CanApp
     int countInterval = 1000;
     int countMax = 5;
 
-    void init();
+    static const int HARD_COMM_MODULE = 0;
+    static const int HARD_CANBUS_UNIT = 1;
+
+    int hardware = 1;
+
+    void init( int hard );
     void init( CAN_device_t _CAN_cfg );
     void Unit_init();
+    void Comm_init();
+
     void setTestFlag( int txtest, int show );
     void loop();
     void buf_init();

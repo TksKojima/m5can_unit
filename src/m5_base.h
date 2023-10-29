@@ -6,6 +6,12 @@
 #include <M5Stack.h>
 #include <M5GFX.h>
 
+#include <m5can_unit_app.h>
+
+
+extern CanApp canUnit;
+extern CanApp canComm;
+
 void M5_setup();
 int M5_loop_BtnA( int cntNum );
 int M5_loop_BtnB( int cntNum );
