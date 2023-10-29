@@ -27,6 +27,9 @@ https://github.com/miwagner/ESP32-Arduino-CAN
 M5GFX display;
 M5Canvas canvas(&display);
 
+CanApp canUnit;
+CAN_device_t CAN_cfg;  // CAN Config
+
 int can_tx_test = 1;
 int can_show_mode = 2;
 
@@ -47,7 +50,7 @@ void setup() {
 
 
     M5_setup();
-    can_init();
+    canUnit.init( CAN_cfg );
 
 
 }
@@ -61,9 +64,9 @@ void loop() {
     can_tx_test   = M5_getCntBtnA();
     can_show_mode = M5_getCntBtnC();
     //can_setTestFlag( can_tx_test , can_show_mode );
-    can_setTestFlag( can_tx_test , can_show_mode );
+    canUnit.setTestFlag( can_tx_test , can_show_mode );
 
-    can_loop();
+    canUnit.loop();
 
     M5_loop_BtnA(2);
     M5_loop_BtnB(2);

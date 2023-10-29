@@ -28,7 +28,7 @@ typedef struct canTxRxFlag
 
 }canTxRxFlag;
 
-#define CANBUF_SIZE (100)
+//#define CANBUF_SIZE (100)
 
 typedef struct canRxBuffer
 {
@@ -76,27 +76,60 @@ typedef struct canTxBuffer
 
 //canBuffer canbuf[0x800];
 
-extern char can_json[];
 
-void can_init();
-void can_setTestFlag( int txtest, int show );
-void can_loop();
-void canbuf_init();
-void canTxbuf_set( int id, char dlc, int cycle, unsigned char *data, int txflag  );
-void canTxbuf_set_test( );
-void canbuf_sendSingle( int id );
-void canbuf_send();
-void canbuf_recv();
-//void onReceive(int packetSize);
-void printRecv();
-void setup_CallBack();
-void makeCanMsgJsonDummy();
-void makeCanMsgJson();
-int id2idx( int id );
+typedef struct CanApp
+{
+    // for App
+    // Liteî≈ÇÕcanbufÇÃîzóÒêîÇ0x800Ç…ÇπÇ∏ÅA1000à»â∫ÇÆÇÁÇ¢Ç≈â^óp
+    //const int bufNum = 200; 
+    canRxBuffer canbuf[200];
+    int bufNum = 200;
 
-void M5_CanShowLCD( TFT_eSprite* sprite );
+    int rx_queue_size = 10;  // Receive Queue size
+    
 
-//extern void canTxbuf_set( int id, int dlc, int cycle, char *data, int txflag  );
-//extern void canTxbuf_test( );
+    short id2idx_arr[ 0x800 ];
+    int now_idx = 0;
+
+    int tx_test_flag = 0;
+    int show_flag = 0;
+
+    int countInterval = 1000;
+    int countMax = 5;
+
+    void init();
+    void init( CAN_device_t _CAN_cfg );
+    void Unit_init();
+    void setTestFlag( int txtest, int show );
+    void loop();
+    void buf_init();
+    void Txbuf_set( int id, char dlc, int cycle, unsigned char *data, int txflag  );
+    void Txbuf_set_test( );
+    void buf_sendSingle( int id );
+    void buf_send();
+    void buf_recv();
+    //void onReceive(int packetSize);
+    void printRecv();
+    void recvDataTimeCount();
+    int id2idx( int id );
+    void M5_CanShowLCD( TFT_eSprite* sprite );
+    
+}CanApp;
+
+// void can_init();
+// void can_setTestFlag( int txtest, int show );
+// void can_loop();
+// void canbuf_init();
+// void canTxbuf_set( int id, char dlc, int cycle, unsigned char *data, int txflag  );
+// void canTxbuf_set_test( );
+// void canbuf_sendSingle( int id );
+// void canbuf_send();
+// void canbuf_recv();
+// //void onReceive(int packetSize);
+// void printRecv();
+
+// int id2idx( int id );
+
+//void M5_CanShowLCD( TFT_eSprite* sprite );
 
 #endif

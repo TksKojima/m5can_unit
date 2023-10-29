@@ -23,26 +23,9 @@ M5Stack Basci v2.6 Grove
 #include <Arduino.h>
 #include <m5can_unit_app.h>
 
-const int rx_queue_size = 10;  // Receive Queue size
-CAN_device_t CAN_cfg;  // CAN Config
 
 
-// for App
-// Lite版はcanbufの配列数を0x800にせず、1000以下ぐらいで運用
-const int bufNum = CANBUF_SIZE; 
-canRxBuffer canbuf[bufNum];
-
-short id2idx_arr[ 0x800 ];
-int now_idx = 0;
-
-int tx_test_flag = 0;
-int show_flag = 0;
-
-int countInterval = 1000;
-int countMax = 5;
-
-
-void canUnit_init(){
+void CanApp::Unit_init(){
     CAN_cfg.speed     = CAN_SPEED_1000KBPS; // if use 500kbps , set 1000KBPS BUG
     CAN_cfg.tx_pin_id = GPIO_NUM_21;
     CAN_cfg.rx_pin_id = GPIO_NUM_22;
@@ -52,16 +35,25 @@ void canUnit_init(){
     
 }
 
-void can_init() {
+void CanApp::init() {
 
-    canUnit_init();
-    canbuf_init();
+    Unit_init();
+    buf_init();
 
 }
 
+void CanApp::init( CAN_device_t _CAN_cfg ) {
+
+    CAN_cfg = _CAN_cfg;
+    init();
+
+}
+
+
 //  tx_test_flagが１だと、テスト用の適当なCANメッセージを送信
 //  show_flag = _show_flag;が１だと、LCDとESP32のシリアルで受信データを表示
-void can_setTestFlag( int txtest, int _show_flag ){ //loopの前ぐらいに置く
+
+void CanApp::setTestFlag( int txtest, int _show_flag ){ //loopの前ぐらいに置く
   tx_test_flag = txtest;
   // rx_test_flag = rxtest;
   show_flag = _show_flag;
@@ -69,19 +61,19 @@ void can_setTestFlag( int txtest, int _show_flag ){ //loopの前ぐらいに置�
 }
 
 
-void can_loop(){
+void CanApp::loop(){
 
   if( tx_test_flag ){
-    canTxbuf_set_test();
+    Txbuf_set_test();
   }
 
-  canbuf_send();
-  canbuf_recv();
+  buf_send();
+  buf_recv();
   
 }
 
 
-void canbuf_init(){
+void CanApp::buf_init(){
   for( int i=0; i<bufNum; i++){
     canbuf[i].id = -1;
 
@@ -102,7 +94,7 @@ void canbuf_init(){
   }
 }
 
-int id2idx( int id ){
+int CanApp::id2idx( int id ){
   if( id2idx_arr[id] == -1 ){
     id2idx_arr[id] = now_idx;
     now_idx++;
@@ -117,7 +109,7 @@ int id2idx( int id ){
 
 }
 
-void canTxbuf_set_test(){
+void CanApp::Txbuf_set_test(){
   unsigned char  testdata[8];
   // testdata[0] = 192;
   // testdata[1] = 168;
@@ -140,11 +132,11 @@ void canTxbuf_set_test(){
     canbuf[i].data.u2[1] = 0x5678;
     canbuf[i].data.u2[2] = 0x9abc ;
     canbuf[i].data.u2[3] = 0;
-    canTxbuf_set( i, canbuf[i].dlc, canbuf[i].cycleTime, canbuf[i].data.u1, 1 );
+    Txbuf_set( i, canbuf[i].dlc, canbuf[i].cycleTime, canbuf[i].data.u1, 1 );
   }  
 }
 
-void canTxbuf_set( int id, char dlc, int cycle, unsigned char *data, int txflag ){
+void CanApp::Txbuf_set( int id, char dlc, int cycle, unsigned char *data, int txflag ){
   int tx_idx = id2idx( id );
 
   canbuf[tx_idx].id = id;  
@@ -166,7 +158,7 @@ void canTxbuf_set( int id, char dlc, int cycle, unsigned char *data, int txflag 
 }
 
 
-void canbuf_sendSingle( int idx ){
+void CanApp::buf_sendSingle( int idx ){
 
   // for M5 comm MCP
   //byte sndStat = CAN0.sendMsgBuf(0x100, 0, 8, data);
@@ -198,7 +190,7 @@ void canbuf_sendSingle( int idx ){
   }
 }
 
-void canbuf_send(){
+void CanApp::buf_send(){
   for( int i=0; i<bufNum; i++){
     if( canbuf[i].txrxFlag == canTxRxFlag::TX){
 
@@ -210,7 +202,7 @@ void canbuf_send(){
 
       if( millis() - canbuf[i].prevTime >= canbuf[i].cycleTime ){
         //Serial.print("before send");
-        canbuf_sendSingle(i);
+        buf_sendSingle(i);
         //Serial.print("after send");
         canbuf[i].prevTime = millis();
 
@@ -222,7 +214,7 @@ void canbuf_send(){
   }   
 }
 
-void canbuf_recv() {
+void CanApp::buf_recv() {
 
   long unsigned int rxId;
   unsigned char len = 0;
@@ -305,7 +297,7 @@ void canbuf_recv() {
   }
 }
 
-void recvDataTimeCount(){
+void CanApp::recvDataTimeCount(){
   static unsigned long prevtime=millis();
   if( millis() - prevtime > countInterval ){
     for( int i=0; i<bufNum; i++){
@@ -321,7 +313,7 @@ void recvDataTimeCount(){
   }
 }
 
-void printRecv(){
+void CanApp::printRecv(){
    Serial.println("printRecv");
 //    for( int i=0; i<0x800; i++){
     for( int i=0; i<bufNum; i++){
@@ -346,14 +338,14 @@ void printRecv(){
 
 
 
-void M5_CanShowLCD( TFT_eSprite* sprite ){
+void CanApp::M5_CanShowLCD( TFT_eSprite* sprite ){
   if( show_flag == 0 ){
     return;
   }
   (*sprite).setTextSize(1);
 
   (*sprite).printf("   :ID :DLC :Cycle : Data\n" );
-  for( int i=0; i<CANBUF_SIZE; i++ ){
+  for( int i=0; i<bufNum; i++ ){
     if( canbuf[i].txrxFlag == canTxRxFlag::TX ||  canbuf[i].txrxFlag == canTxRxFlag::RX ){
       if( canbuf[i].txrxFlag == canTxRxFlag::TX ){ (*sprite).printf("Tx "); }
       if( canbuf[i].txrxFlag == canTxRxFlag::RX ){ (*sprite).printf("Rx "); } 
