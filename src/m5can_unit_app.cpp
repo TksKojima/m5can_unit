@@ -102,14 +102,6 @@ void CanApp::loop(){
   }
 
   buf_send();
-
-  // static int tempcount = 0;
-  // tempcount++;
-  // if( tempcount >100  ){
-  //   buf_send_show();
-  //   tempcount = 0;
-  // }
-
   buf_recv();
   
 }
@@ -353,10 +345,6 @@ void CanApp::buf_recv() {
       else
           sprintf(msgString, "Standard ID: 0x%.3lX  DLC: %1d  Data:", rxId, len);
 
-      // if( rx_test_flag == 2 ){
-      //       Serial.print(msgString);
-      // }
-
       if ((rxId & 0x40000000) == 0x40000000) {  // Determine if message is a remote request frame.
           sprintf(msgString, " REMOTE REQUEST FRAME");
       } 
@@ -451,24 +439,24 @@ void CanApp::printRecv(){
 }
 
 
-
-void CanApp::M5_CanShowLCD( TFT_eSprite* sprite ){
+void CanApp::M5_CanShowLCD( M5Canvas canvas ){
+// void CanApp::M5_CanShowLCD( TFT_eSprite* sprite ){
   if( show_flag == 0 ){
     return;
   }
-  (*sprite).setTextSize(1);
+  canvas.setTextSize(1);
 
-  (*sprite).printf("   :ID :DLC :Cycle : Data\n" );
+  canvas.printf("   :ID :DLC :Cycle : Data\n" );
   for( int i=0; i<bufNum; i++ ){
     if( canbuf[i].txrxFlag == canTxRxFlag::TX ||  canbuf[i].txrxFlag == canTxRxFlag::RX ){
-      if( canbuf[i].txrxFlag == canTxRxFlag::TX ){ (*sprite).printf("Tx "); }
-      if( canbuf[i].txrxFlag == canTxRxFlag::RX ){ (*sprite).printf("Rx "); } 
-      //(*sprite).printf("i:%3X L:%d T:%5d D: ", canbuf[i].id, canbuf[i].dlc, canbuf[i].cycleTime );
-      (*sprite).printf(":%3X :%d :%5d : ", canbuf[i].id, canbuf[i].dlc, canbuf[i].cycleTime );
+      if( canbuf[i].txrxFlag == canTxRxFlag::TX ){ canvas.printf("Tx "); }
+      if( canbuf[i].txrxFlag == canTxRxFlag::RX ){ canvas.printf("Rx "); } 
+      //canvas.printf("i:%3X L:%d T:%5d D: ", canbuf[i].id, canbuf[i].dlc, canbuf[i].cycleTime );
+      canvas.printf(":%3X :%d :%5d : ", canbuf[i].id, canbuf[i].dlc, canbuf[i].cycleTime );
       for( int j=0; j<canbuf[i].dlc; j++ ){
-        (*sprite).printf("%2X ", canbuf[i].data.u1[j] );
+        canvas.printf("%2X ", canbuf[i].data.u1[j] );
       }
-      (*sprite).printf("\n");
+      canvas.printf("\n");
     }
   }
 

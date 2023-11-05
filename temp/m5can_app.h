@@ -89,7 +89,7 @@ void makeCanMsgJsonDummy();
 void makeCanMsgJson();
 int id2idx( int id );
 
-void M5_CanShowLCD( TFT_eSprite* sprite );
+void M5_CanShowLCD( /* TFT_eSprite* sprite */ );
 
 //extern void canTxbuf_set( int id, int dlc, int cycle, char *data, int txflag  );
 //extern void canTxbuf_test( );

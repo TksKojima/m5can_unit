@@ -1,7 +1,7 @@
 #include <m5_base.h>
 
 
-TFT_eSprite sprite(&M5.Lcd);
+//TFT_ecanvas canvas(&M5.Lcd);
 
 
 
@@ -16,12 +16,12 @@ void M5_setup(){
     M5.Power.begin();
 
     M5.Speaker.begin();
-    M5.Speaker.setVolume(4);
+    M5.Speaker.setVolume(90);
 
-    sprite.setTextColor(GREEN);
-    sprite.setColorDepth(8);
-    sprite.setTextSize(1);
-    sprite.createSprite(M5.Lcd.width(), M5.Lcd.height());
+    // sprite.setTextColor(GREEN);
+    // sprite.setColorDepth(8);
+    // sprite.setTextSize(1);
+    // sprite.createSprite(M5.Lcd.width(), M5.Lcd.height());
     delay(5);
 
 }
@@ -87,46 +87,41 @@ int M5_getCntBtnA(){ return btnA_cnt; }
 int M5_getCntBtnB(){ return btnB_cnt; }
 int M5_getCntBtnC(){ return btnC_cnt; }
 
-void M5_LCD_loop( int showLCD ){
-    if( showLCD == 0){
-        return ;
-    }
+void M5_LCD_loop( M5Canvas canvas ){
 
-    sprite.fillScreen(BLACK);
-    sprite.setCursor(0, 0);
+    canvas.fillScreen(BLACK);
+    canvas.setColor(GREEN);
+    canvas.setCursor(0, 0);
+    canvas.printf(" M5 LCD Show");
+    canvas.printf("\n");
+    canvas.printf("Btn A: %d", btnA_cnt);
+    canvas.printf("\n");
+    canvas.printf("Btn B: %d", btnB_cnt);
+    canvas.printf("\n");
+    canvas.printf("Btn C: %d", btnC_cnt);
 
-    sprite.printf(" M5 LCD Show");
-    sprite.printf("\n");
+    // canvas.printf("Can Tx Test Msg (press A btn): %d", can_tx_test);
+    // if( can_tx_test != 0 ){  canvas.printf(" TestMsg sending");
+    // }else{                   canvas.printf(" No TestMsg"); }
+    // canvas.printf("\n");
 
-    sprite.printf("Btn A: %d", btnA_cnt);
-    sprite.printf("\n");
-    sprite.printf("Btn B: %d", btnB_cnt);
-    sprite.printf("\n");
-    sprite.printf("Btn C: %d", btnC_cnt);
-    sprite.printf("\n");
+    // canvas.printf("Can Show Mode   (press B btn): %d", can_show_mode);
+    // if( can_show_mode == 0 ){ canvas.printf(" No show"); }
+    // if( can_show_mode == 1 ){ canvas.printf(" show LCD");}
+    // if( can_show_mode == 2 ){ canvas.printf(" show LCD & Serial"); }     
+    // canvas.printf("\n");
 
+    // canvas.printf("Wifi start (press C btn): %d", use_wifi);
+    // if( use_wifi != 0 ){  canvas.printf(" Wifi On for CAN setting ");
+    // }else{                   canvas.printf(" Wifi Off"); }
+    // canvas.printf("\n");
 
-    // sprite.printf("Can Tx Test Msg (press A btn): %d", can_tx_test);
-    // if( can_tx_test != 0 ){  sprite.printf(" TestMsg sending");
-    // }else{                   sprite.printf(" No TestMsg"); }
-    // sprite.printf("\n");
+    canUnit.M5_CanShowLCD(canvas);
+    canComm.M5_CanShowLCD(canvas);
 
-    // sprite.printf("Can Show Mode   (press B btn): %d", can_show_mode);
-    // if( can_show_mode == 0 ){ sprite.printf(" No show"); }
-    // if( can_show_mode == 1 ){ sprite.printf(" show LCD");}
-    // if( can_show_mode == 2 ){ sprite.printf(" show LCD & Serial"); }     
-    // sprite.printf("\n");
+    // main_sensorShow(  &canvas  );
 
-    // sprite.printf("Wifi start (press C btn): %d", use_wifi);
-    // if( use_wifi != 0 ){  sprite.printf(" Wifi On for CAN setting ");
-    // }else{                   sprite.printf(" Wifi Off"); }
-    // sprite.printf("\n");
-
-    canUnit.M5_CanShowLCD(&sprite);
-    canComm.M5_CanShowLCD(&sprite);
-    // main_sensorShow(  &sprite  );
-
-    sprite.pushSprite(0, 0); 
+//    canvas.pushcanvas(0, 0); 
     
 }
 

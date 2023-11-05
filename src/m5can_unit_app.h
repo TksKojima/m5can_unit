@@ -5,11 +5,13 @@
 #define M5CAN_UNIT_APP_H
 
 #include <Arduino.h>
-#include <M5Stack.h>
+//#include <M5Stack.h>
 #include <CAN_config.h>
 #include <ESP32CAN.h>
 //#include <can_bus_unit.h>
-#include <M5Stack.h>
+//#include <M5Stack.h>
+#include <M5Unified.h>
+
 #include <M5GFX.h>
 #include <mcp_can.h>
 
@@ -128,24 +130,10 @@ typedef struct CanApp
     void printRecv();
     void recvDataTimeCount();
     int id2idx( int id );
-    void M5_CanShowLCD( TFT_eSprite* sprite );
+    //void M5_CanShowLCD( TFT_eSprite* sprite );
+    void M5_CanShowLCD( M5Canvas canvas);
     
 }CanApp;
 
-// void can_init();
-// void can_setTestFlag( int txtest, int show );
-// void can_loop();
-// void canbuf_init();
-// void canTxbuf_set( int id, char dlc, int cycle, unsigned char *data, int txflag  );
-// void canTxbuf_set_test( );
-// void canbuf_sendSingle( int id );
-// void canbuf_send();
-// void canbuf_recv();
-// //void onReceive(int packetSize);
-// void printRecv();
-
-// int id2idx( int id );
-
-//void M5_CanShowLCD( TFT_eSprite* sprite );
 
 #endif

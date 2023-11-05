@@ -306,28 +306,28 @@ void printRecv(){
 }
 
 
+void M5_CanShowLCD(){}
+// void M5_CanShowLCD( TFT_eSprite* sprite ){
+//   if( show_flag == 0 ){
+//     return;
+//   }
+//   (*sprite).setTextSize(1);
 
-void M5_CanShowLCD( TFT_eSprite* sprite ){
-  if( show_flag == 0 ){
-    return;
-  }
-  (*sprite).setTextSize(1);
+//   (*sprite).printf("   :ID :DLC :Cycle : Data\n" );
+//   for( int i=0; i<CANBUF_SIZE; i++ ){
+//     if( canbuf[i].txrxFlag == canTxRxFlag::TX ||  canbuf[i].txrxFlag == canTxRxFlag::RX ){
+//       if( canbuf[i].txrxFlag == canTxRxFlag::TX ){ (*sprite).printf("Tx "); }
+//       if( canbuf[i].txrxFlag == canTxRxFlag::RX ){ (*sprite).printf("Rx "); } 
+//       //(*sprite).printf("i:%3X L:%d T:%5d D: ", canbuf[i].id, canbuf[i].dlc, canbuf[i].cycleTime );
+//       (*sprite).printf(":%3X :%d :%5d : ", canbuf[i].id, canbuf[i].dlc, canbuf[i].cycleTime );
+//       for( int j=0; j<canbuf[i].dlc; j++ ){
+//         (*sprite).printf("%2X ", canbuf[i].data.u1[j] );
+//       }
+//       (*sprite).printf("\n");
+//     }
+//   }
 
-  (*sprite).printf("   :ID :DLC :Cycle : Data\n" );
-  for( int i=0; i<CANBUF_SIZE; i++ ){
-    if( canbuf[i].txrxFlag == canTxRxFlag::TX ||  canbuf[i].txrxFlag == canTxRxFlag::RX ){
-      if( canbuf[i].txrxFlag == canTxRxFlag::TX ){ (*sprite).printf("Tx "); }
-      if( canbuf[i].txrxFlag == canTxRxFlag::RX ){ (*sprite).printf("Rx "); } 
-      //(*sprite).printf("i:%3X L:%d T:%5d D: ", canbuf[i].id, canbuf[i].dlc, canbuf[i].cycleTime );
-      (*sprite).printf(":%3X :%d :%5d : ", canbuf[i].id, canbuf[i].dlc, canbuf[i].cycleTime );
-      for( int j=0; j<canbuf[i].dlc; j++ ){
-        (*sprite).printf("%2X ", canbuf[i].data.u1[j] );
-      }
-      (*sprite).printf("\n");
-    }
-  }
-
-}
+// }
 
 
 
