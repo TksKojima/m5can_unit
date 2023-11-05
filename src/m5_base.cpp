@@ -35,7 +35,7 @@ int M5_loop_BtnA( int cntNum ){
         btnA_cnt++;
         if( btnA_cnt >= cntNum ){ btnA_cnt = 0; }
         ret_flag = 1;
-         M5.Speaker.tone(1000, 250); // ü”g”1000 Hz‚Å0.5•bŠÔ‰¹‚ğ???¶
+        M5.Speaker.tone(1000, 250); // ü”g”1000 Hz‚Å0.5•bŠÔ‰¹‚ğ???¶
 
     }
     prevBtnA = M5.BtnA.isPressed();
@@ -51,7 +51,7 @@ int  M5_loop_BtnB( int cntNum ){
         btnB_cnt++;
         if( btnB_cnt >= cntNum ){ btnB_cnt = 0; }
         ret_flag = 1;
-         M5.Speaker.tone(1300, 250); // ü”g”1000 Hz‚Å0.5•bŠÔ‰¹‚ğ???¶
+        M5.Speaker.tone(1300, 250); // ü”g”1000 Hz‚Å0.5•bŠÔ‰¹‚ğ???¶
     }    
     prevBtnB = M5.BtnB.isPressed();
     return ret_flag;
@@ -66,7 +66,7 @@ int  M5_loop_BtnC( int cntNum ){
         btnC_cnt++;
         if( btnC_cnt >= cntNum ){ btnC_cnt = 0; }
         ret_flag = 1;
-         M5.Speaker.tone(1300, 250); // ü”g”1000 Hz‚Å0.5•bŠÔ‰¹‚ğ???¶
+        M5.Speaker.tone(1300, 250); // ü”g”1000 Hz‚Å0.5•bŠÔ‰¹‚ğ???¶
     }    
     prevBtnC = M5.BtnC.isPressed();
     return ret_flag;

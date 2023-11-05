@@ -13,6 +13,8 @@
 #include <M5GFX.h>
 #include <mcp_can.h>
 
+#include <fifo.h>
+
 
 //#include "ArduinoJson-v6.19.4.h"
 //#include "wifi_Server.h"
@@ -55,6 +57,7 @@ typedef struct canRxBuffer
 
     unsigned char noRecvCnt[8];
 
+
 }canRxBuffer;
 
 typedef struct canTxBuffer
@@ -71,6 +74,7 @@ typedef struct canTxBuffer
 		unsigned short u2[4]; /**< \brief Payload u32 access*/
 		unsigned long  u4[2];    /**< \brief Payload u64 access*/
 	} data;
+
 
 }canTxBuffer;
 
@@ -102,6 +106,9 @@ typedef struct CanApp
 
     int hardware = 1;
 
+    FIFO<int> fifo_send;
+    FIFO<int> fifo_recv;
+
     void init( int hard );
     void init( CAN_device_t _CAN_cfg );
     void Unit_init();
@@ -113,6 +120,8 @@ typedef struct CanApp
     void Txbuf_set( int id, char dlc, int cycle, unsigned char *data, int txflag  );
     void Txbuf_set_test( );
     void buf_sendSingle( int id );
+    void buf_send_show();
+    void buf_recv_show();
     void buf_send();
     void buf_recv();
     //void onReceive(int packetSize);

@@ -70,6 +70,10 @@ void CanApp::init( int _hardware) {
 
     buf_init();
 
+
+
+
+
 }
 
 // void CanApp::init( CAN_device_t _CAN_cfg ) {
@@ -98,6 +102,14 @@ void CanApp::loop(){
   }
 
   buf_send();
+
+  // static int tempcount = 0;
+  // tempcount++;
+  // if( tempcount >100  ){
+  //   buf_send_show();
+  //   tempcount = 0;
+  // }
+
   buf_recv();
   
 }
@@ -208,6 +220,8 @@ void CanApp::buf_sendSingle( int idx ){
     ESP32Can.CANWriteFrame(&tx_frame);
   }
 
+  fifo_send.push( idx );
+
   // Serial.print("canid: ");
   // Serial.print(id); 
   // Serial.print(" data");
@@ -227,6 +241,26 @@ void CanApp::buf_sendSingle( int idx ){
     Serial.println();
   }
 }
+
+void CanApp::buf_send_show(){
+//Serial.printf(" ff: %d",fifo_send.size());
+  while( fifo_send.size() > 0 ){
+    int idx = fifo_send.front();
+    if( hardware == HARD_CANBUS_UNIT ){ Serial.print("Can Unit "); }
+    if( hardware == HARD_COMM_MODULE ){ Serial.print("Can Comm "); }
+
+    Serial.printf(" id: %d  cycle: %d  dlc: %d", canbuf[idx].id, canbuf[idx].cycleTime, (int)(canbuf[idx].dlc));
+    for( int n=0; n<canbuf[idx].dlc; n++){
+      Serial.printf(" %d", canbuf[idx].data.u1[n]);
+
+    } 
+    Serial.printf(" time: %d", canbuf[idx].prevTime);
+    Serial.println();
+
+    fifo_send.pop();
+  }
+}
+
 
 void CanApp::buf_send(){
   for( int i=0; i<bufNum; i++){
@@ -251,6 +285,40 @@ void CanApp::buf_send(){
     }
   }   
 }
+
+void CanApp::buf_recv_show(){
+
+  while( fifo_recv.size() > 0 ){
+    int rx_idx = fifo_recv.front();
+    int  rx_id = canbuf[rx_idx].id;
+    int rx_dlc = canbuf[rx_idx].dlc;
+    canbuf[rx_idx].cycleTime = millis() - canbuf[rx_id].prevTime;
+    canbuf[rx_idx].prevTime  = millis();
+    canbuf[rx_idx].txrxFlag = canTxRxFlag::RX;          
+
+    if( hardware == HARD_CANBUS_UNIT ){ Serial.print("Can Unit "); }
+    if( hardware == HARD_COMM_MODULE ){ Serial.print("Can Comm "); }
+  
+    Serial.print("packet with id 0x");
+    Serial.print(rx_id, HEX);    //Serial.print(" and length ");
+    //Serial.println(packetSize);
+    Serial.print(" dlc: ");
+    Serial.print( rx_dlc );
+    Serial.print(" size: ");
+
+
+    for (byte idx = 0; idx < rx_dlc; idx++) {
+
+      Serial.print(" ");
+      Serial.print( canbuf[rx_idx].data.u1[idx], HEX );
+      Serial.print(", ");
+    }      
+    Serial.println();        
+
+    fifo_recv.pop();
+  }
+}
+
 
 void CanApp::buf_recv() {
 
@@ -301,10 +369,12 @@ void CanApp::buf_recv() {
         canbuf[rx_idx].cycleTime = millis() - canbuf[rx_id].prevTime;
         canbuf[rx_idx].prevTime  = millis();
         canbuf[rx_idx].txrxFlag = canTxRxFlag::RX;
+        fifo_recv.push(rx_idx);
+
 
         if( show_flag == 2 ){
-          if( hardware == HARD_CANBUS_UNIT ){ Serial.print("Can Unit"); }
-          if( hardware == HARD_COMM_MODULE ){ Serial.print("Can Comm"); }
+          if( hardware == HARD_CANBUS_UNIT ){ Serial.print("Can Unit "); }
+          if( hardware == HARD_COMM_MODULE ){ Serial.print("Can Comm "); }
         
           Serial.print("packet with id 0x");
           Serial.print(rx_id, HEX);    //Serial.print(" and length ");
@@ -336,8 +406,7 @@ void CanApp::buf_recv() {
 
       if( show_flag == 2 ){
         Serial.print(msgString);
-        Serial.println();
-        
+        Serial.println();        
       }      
   }
 }

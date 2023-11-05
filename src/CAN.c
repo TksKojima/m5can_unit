@@ -273,7 +273,7 @@ int CAN_write_frame(const CAN_frame_t *p_frame) {
 
 	// wait for the frame tx to complete
 	//xSemaphoreTake(sem_tx_complete, portMAX_DELAY);
-	xSemaphoreTake(sem_tx_complete, 10 / portTICK_RATE_MS); //デフォルトだと、送信が完了しないとここで待たされる。ミリ秒 / portTICK_RATE_MS　とすると待ち時間が設定できる。
+	xSemaphoreTake(sem_tx_complete, 1 / portTICK_RATE_MS); //デフォルトだと、送信が完了しないとここで待たされる。ミリ秒 / portTICK_RATE_MS　とすると待ち時間が設定できる。
 
 	return 0;
 }
