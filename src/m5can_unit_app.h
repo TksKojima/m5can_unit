@@ -41,7 +41,7 @@ typedef struct canRxBuffer
     char  dlc;
     short id;  
     unsigned long prevTime;
-    short cycleTime;  
+    unsigned long cycleTime;  
     //unsigned int setTimeCnt;
 
 	union {
@@ -118,6 +118,9 @@ typedef struct CanApp
 
     void setTestFlag( int txtest, int show );
     void loop();
+    void loop_send();
+    void loop_recv();
+
     void buf_init();
     void Txbuf_set( int id, char dlc, int cycle, unsigned char *data, int txflag  );
     void Txbuf_set_test( );
@@ -131,7 +134,7 @@ typedef struct CanApp
     void recvDataTimeCount();
     int id2idx( int id );
     //void M5_CanShowLCD( TFT_eSprite* sprite );
-    void M5_CanShowLCD( M5Canvas canvas);
+    void M5_CanShowLCD( M5Canvas *canvas);
     
 }CanApp;
 

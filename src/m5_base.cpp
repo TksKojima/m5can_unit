@@ -8,6 +8,9 @@
 int btnA_cnt = 0;
 int btnB_cnt = 0;
 int btnC_cnt = 0;
+int btnA_cntPrev = 0;
+int btnB_cntPrev = 0;
+int btnC_cntPrev = 0;
 
 int show_LCD = 0;
 
@@ -31,14 +34,15 @@ int M5_loop_BtnA( int cntNum ){
     int ret_flag = 0;
     static int prevBtnA = 0;
 
-    if (M5.BtnA.isPressed() && prevBtnA == 0 ) {
+    btnA_cntPrev = btnA_cnt;
+    if (M5.BtnA.wasReleased() && prevBtnA == 0 ) {
         btnA_cnt++;
         if( btnA_cnt >= cntNum ){ btnA_cnt = 0; }
         ret_flag = 1;
-        M5.Speaker.tone(1000, 250); // é¸îgêî1000 HzÇ≈0.5ïbä‘âπÇ???ê∂
+        M5.Speaker.tone(1000, 250); //
 
     }
-    prevBtnA = M5.BtnA.isPressed();
+    prevBtnA = M5.BtnA.wasReleased();
     return ret_flag;
 
 }
@@ -47,13 +51,14 @@ int  M5_loop_BtnB( int cntNum ){
     int ret_flag = 0;
     static int prevBtnB = 0;
 
-    if (M5.BtnB.isPressed() && prevBtnB == 0 ) {
+    btnB_cntPrev = btnB_cnt;
+    if (M5.BtnB.wasReleased() && prevBtnB == 0 ) {
         btnB_cnt++;
         if( btnB_cnt >= cntNum ){ btnB_cnt = 0; }
         ret_flag = 1;
-        M5.Speaker.tone(1300, 250); // é¸îgêî1000 HzÇ≈0.5ïbä‘âπÇ???ê∂
+        M5.Speaker.tone(1300, 250); //
     }    
-    prevBtnB = M5.BtnB.isPressed();
+    prevBtnB = M5.BtnB.wasReleased();
     return ret_flag;
     
 }
@@ -61,14 +66,14 @@ int  M5_loop_BtnB( int cntNum ){
 int  M5_loop_BtnC( int cntNum ){
     int ret_flag = 0;
     static int prevBtnC = 0;
-    if (M5.BtnC.isPressed() && prevBtnC == 0 ) {
-
+    btnC_cntPrev = btnC_cnt;
+    if (M5.BtnC.wasReleased() && prevBtnC == 0 ) {
         btnC_cnt++;
         if( btnC_cnt >= cntNum ){ btnC_cnt = 0; }
         ret_flag = 1;
-        M5.Speaker.tone(1300, 250); // é¸îgêî1000 HzÇ≈0.5ïbä‘âπÇ???ê∂
+        M5.Speaker.tone(1300, 250); // 
     }    
-    prevBtnC = M5.BtnC.isPressed();
+    prevBtnC = M5.BtnC.wasReleased();
     return ret_flag;
     
 }
@@ -83,22 +88,32 @@ int M5_btn_loop(){
 
 }
 
+void  M5_setCntBtnA(int setcnt){ btnA_cnt = setcnt; }
+void  M5_setCntBtnB(int setcnt){ btnB_cnt = setcnt; }
+void  M5_setCntBtnC(int setcnt){ btnC_cnt = setcnt; }
 int M5_getCntBtnA(){ return btnA_cnt; }
 int M5_getCntBtnB(){ return btnB_cnt; }
 int M5_getCntBtnC(){ return btnC_cnt; }
+int M5_getCntPrevBtnA(){ return btnA_cntPrev; }
+int M5_getCntPrevBtnB(){ return btnB_cntPrev; }
+int M5_getCntPrevBtnC(){ return btnC_cntPrev; }
 
 void M5_LCD_loop( M5Canvas canvas ){
 
+    M5.Display.startWrite();
     canvas.fillScreen(BLACK);
     canvas.setColor(GREEN);
     canvas.setCursor(0, 0);
     canvas.printf(" M5 LCD Show");
     canvas.printf("\n");
     canvas.printf("Btn A: %d", btnA_cnt);
-    canvas.printf("\n");
+    //canvas.printf("\n");
+    canvas.printf("       ");
     canvas.printf("Btn B: %d", btnB_cnt);
-    canvas.printf("\n");
+    //canvas.printf("\n");
+    canvas.printf("       ");
     canvas.printf("Btn C: %d", btnC_cnt);
+    canvas.printf("\n");
 
     // canvas.printf("Can Tx Test Msg (press A btn): %d", can_tx_test);
     // if( can_tx_test != 0 ){  canvas.printf(" TestMsg sending");
@@ -116,12 +131,11 @@ void M5_LCD_loop( M5Canvas canvas ){
     // }else{                   canvas.printf(" Wifi Off"); }
     // canvas.printf("\n");
 
-    canUnit.M5_CanShowLCD(canvas);
-    canComm.M5_CanShowLCD(canvas);
+    canComm.M5_CanShowLCD(&canvas);
+    canUnit.M5_CanShowLCD(&canvas);
 
-    // main_sensorShow(  &canvas  );
-
-//    canvas.pushcanvas(0, 0); 
+    canvas.pushSprite(&M5.Display,0,0);
+    M5.Display.endWrite();
     
 }
 

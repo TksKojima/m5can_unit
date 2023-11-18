@@ -76,13 +76,6 @@ void CanApp::init( int _hardware) {
 
 }
 
-// void CanApp::init( CAN_device_t _CAN_cfg ) {
-
-//     CAN_cfg = _CAN_cfg;
-//     init();
-
-// }
-
 
 //  tx_test_flagが１だと、テスト用の適当なCANメッセージを送信
 //  show_flag = _show_flag;が１だと、LCDとESP32のシリアルで受信データを表示
@@ -96,12 +89,22 @@ void CanApp::setTestFlag( int txtest, int _show_flag ){ //loopの前ぐらいに
 
 
 void CanApp::loop(){
+  loop_send();
+  loop_recv();
+
+}
+void CanApp::loop_send(){
 
   if( tx_test_flag ){
     Txbuf_set_test();
   }
 
   buf_send();
+  
+}
+
+void CanApp::loop_recv(){
+
   buf_recv();
   
 }
@@ -155,7 +158,7 @@ void CanApp::Txbuf_set_test(){
   // testdata[7] = 0;
   // canTxbuf_set( 0x732, 8, 732, testdata, 1);
 
-  for( int i=1; i<=10; i++){
+  for( int i=0; i<=4; i++){
     canbuf[i].dlc = i%8 + 1;
     canbuf[i].txrxFlag = 1;
     canbuf[i].cycleTime = canbuf[i].dlc * 100;
@@ -166,7 +169,7 @@ void CanApp::Txbuf_set_test(){
     canbuf[i].data.u2[1] = 0x5678;
     canbuf[i].data.u2[2] = 0x9abc ;
     canbuf[i].data.u2[3] = 0;
-    Txbuf_set( i, canbuf[i].dlc, canbuf[i].cycleTime, canbuf[i].data.u1, 1 );
+    Txbuf_set( i+1, canbuf[i].dlc, canbuf[i].cycleTime, canbuf[i].data.u1, 1 );
   }  
 }
 
@@ -263,7 +266,6 @@ void CanApp::buf_send(){
         continue;
       }
 
-
       if( millis() - canbuf[i].prevTime >= canbuf[i].cycleTime ){
         //Serial.print("before send");
         buf_sendSingle(i);
@@ -284,9 +286,9 @@ void CanApp::buf_recv_show(){
     int rx_idx = fifo_recv.front();
     int  rx_id = canbuf[rx_idx].id;
     int rx_dlc = canbuf[rx_idx].dlc;
-    canbuf[rx_idx].cycleTime = millis() - canbuf[rx_id].prevTime;
-    canbuf[rx_idx].prevTime  = millis();
-    canbuf[rx_idx].txrxFlag = canTxRxFlag::RX;          
+    // canbuf[rx_idx].cycleTime = millis() - canbuf[rx_id].prevTime;
+    // canbuf[rx_idx].prevTime  = millis();
+    // canbuf[rx_idx].txrxFlag = canTxRxFlag::RX;          
 
     if( hardware == HARD_CANBUS_UNIT ){ Serial.print("Can Unit "); }
     if( hardware == HARD_COMM_MODULE ){ Serial.print("Can Comm "); }
@@ -296,9 +298,10 @@ void CanApp::buf_recv_show(){
     //Serial.println(packetSize);
     Serial.print(" dlc: ");
     Serial.print( rx_dlc );
-    Serial.print(" size: ");
+    Serial.print(" cyc: ");
+    Serial.print( canbuf[rx_idx].cycleTime );
 
-
+    Serial.print(" data: ");
     for (byte idx = 0; idx < rx_dlc; idx++) {
 
       Serial.print(" ");
@@ -324,8 +327,9 @@ void CanApp::buf_recv() {
 
   CAN_frame_t rx_frame;
 
-  //if (!digitalRead(CAN0_INT))  // If CAN0_INT pin is low, read receive buffer
-  if ( ( hardware == HARD_COMM_MODULE && !digitalRead(CAN0_INT) ) || 
+  // if ( ( hardware == HARD_COMM_MODULE && !digitalRead(CAN0_INT) ) || 
+  //      ( hardware == HARD_CANBUS_UNIT && xQueueReceive(CAN_cfg.rx_queue, &rx_frame, 3 * portTICK_PERIOD_MS) == pdTRUE ) ){
+  while ( ( hardware == HARD_COMM_MODULE && (CAN0.checkReceive()==CAN_MSGAVAIL )) || 
        ( hardware == HARD_CANBUS_UNIT && xQueueReceive(CAN_cfg.rx_queue, &rx_frame, 3 * portTICK_PERIOD_MS) == pdTRUE ) ){
       
       if( hardware == HARD_COMM_MODULE ) {
@@ -354,24 +358,11 @@ void CanApp::buf_recv() {
         int rx_idx = id2idx( rx_id );
         canbuf[rx_idx].id  = rx_id;
         canbuf[rx_idx].dlc = rx_dlc;
-        canbuf[rx_idx].cycleTime = millis() - canbuf[rx_id].prevTime;
+        canbuf[rx_idx].cycleTime = millis() - canbuf[rx_idx].prevTime;
         canbuf[rx_idx].prevTime  = millis();
         canbuf[rx_idx].txrxFlag = canTxRxFlag::RX;
         fifo_recv.push(rx_idx);
 
-
-        if( show_flag == 2 ){
-          if( hardware == HARD_CANBUS_UNIT ){ Serial.print("Can Unit "); }
-          if( hardware == HARD_COMM_MODULE ){ Serial.print("Can Comm "); }
-        
-          Serial.print("packet with id 0x");
-          Serial.print(rx_id, HEX);    //Serial.print(" and length ");
-          //Serial.println(packetSize);
-          Serial.print(" dlc: ");
-          Serial.print( rx_dlc );
-          Serial.print(" size: ");
-
-        }
 
           for (byte idx = 0; idx < len; idx++) {
             if( canbuf[rx_idx].data.u1[idx] != rxBuf[idx]){
@@ -379,23 +370,13 @@ void CanApp::buf_recv() {
             }
 
             canbuf[rx_idx].data.u1[idx] = rxBuf[idx];
-            canbuf[rx_idx].noRecvCnt[idx] = 0;
-
-            if( show_flag == 2 ){
-              Serial.print(" ");
-              Serial.print( rxBuf[idx], HEX );
-              Serial.print(", ");
-            }            
+            canbuf[rx_idx].noRecvCnt[idx] = 0;        
 
             sprintf(msgString, " 0x%.2X", rxBuf[idx]);
 
         }      
       }
-
-      if( show_flag == 2 ){
-        Serial.print(msgString);
-        Serial.println();        
-      }      
+  
   }
 }
 
@@ -439,24 +420,23 @@ void CanApp::printRecv(){
 }
 
 
-void CanApp::M5_CanShowLCD( M5Canvas canvas ){
-// void CanApp::M5_CanShowLCD( TFT_eSprite* sprite ){
-  if( show_flag == 0 ){
-    return;
-  }
-  canvas.setTextSize(1);
+void CanApp::M5_CanShowLCD( M5Canvas *canvas ){
 
-  canvas.printf("   :ID :DLC :Cycle : Data\n" );
+  //M5Canvas canvas = (*_canvas);
+
+  (*canvas).setTextSize(1);
+//  canvas.println("");
+  (*canvas).printf("\n   :ID :DLC :Cycle : Data\n" );
   for( int i=0; i<bufNum; i++ ){
     if( canbuf[i].txrxFlag == canTxRxFlag::TX ||  canbuf[i].txrxFlag == canTxRxFlag::RX ){
-      if( canbuf[i].txrxFlag == canTxRxFlag::TX ){ canvas.printf("Tx "); }
-      if( canbuf[i].txrxFlag == canTxRxFlag::RX ){ canvas.printf("Rx "); } 
+      if( canbuf[i].txrxFlag == canTxRxFlag::TX ){ (*canvas).printf("Tx "); }
+      if( canbuf[i].txrxFlag == canTxRxFlag::RX ){ (*canvas).printf("Rx "); } 
       //canvas.printf("i:%3X L:%d T:%5d D: ", canbuf[i].id, canbuf[i].dlc, canbuf[i].cycleTime );
-      canvas.printf(":%3X :%d :%5d : ", canbuf[i].id, canbuf[i].dlc, canbuf[i].cycleTime );
+      (*canvas).printf(":%3X :%d :%5d : ", canbuf[i].id, canbuf[i].dlc, canbuf[i].cycleTime );
       for( int j=0; j<canbuf[i].dlc; j++ ){
-        canvas.printf("%2X ", canbuf[i].data.u1[j] );
+        (*canvas).printf("%2X ", canbuf[i].data.u1[j] );
       }
-      canvas.printf("\n");
+      (*canvas).printf("\n");
     }
   }
 

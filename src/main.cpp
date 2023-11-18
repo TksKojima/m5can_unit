@@ -3,7 +3,7 @@
 *******************************************************************************
 * Copyright (c) 2022 by M5Stack
 *                  Equipped with M5Core sample source code
-*                          配�?  M5Core 示例源代�?
+*                          配�?  M5Core 示例源代?��?
 * Visit for more information: https://docs.m5stack.com/en/unit/can
 * 获取更多�?料请访问: https://docs.m5stack.com/zh_CN/unit/can
 *
@@ -40,68 +40,70 @@ M5Canvas canvas;
 
 //CAN_device_t CAN_cfg;  // CAN Config
 
-int can_tx_test = 1;
-int can_tx_test2 = 1;
-int can_show_mode = 2;
+int can_tx_test = 0;
+int can_tx_test2 = 0;
+int disp_show_mode = 0;
 int test = 0;
 
-  unsigned long ms_begin;
-  unsigned long ms_end;
+unsigned long ms_begin;
+unsigned long ms_end;
 
-void canLoopTask(void *pvParameters)
+int LCDflag = 1;
+
+unsigned long last_disp_ms = 0;;
+int can_cnt = 0;
+unsigned long prevmillis=0;
+
+
+void main_disp_show(){
+    last_disp_ms = millis();
+    canUnit.buf_send_show();
+    canComm.buf_send_show();
+    canUnit.buf_recv_show();
+    canComm.buf_recv_show();
+
+    if( LCDflag ){
+      LCDflag = 0;
+      M5_LCD_loop( canvas );
+    }
+}
+
+void canLoopTask2(void *pvParameters)
 {
   portTickType xLastWakeTime;
   xLastWakeTime = xTaskGetTickCount();
 
   while (1)
   {
-    ms_begin = millis();
+    canComm.loop_send();
+    //canUnit.loop_send();
 
-//    Serial.print("test ");
-//    Serial.println(test);
-
-    canUnit.loop();
-    canComm.loop();
-
-    canComm.setTestFlag( can_tx_test , can_show_mode );
-    canUnit.setTestFlag( can_tx_test2 , can_show_mode );
-
-    M5.update(); 
-    can_tx_test   = M5_getCntBtnA();
-    can_tx_test2   = M5_getCntBtnB();
-    can_show_mode = M5_getCntBtnC();
-
-    M5_loop_BtnA(2);
-    M5_loop_BtnB(2);
-    M5_loop_BtnC(3);    
-
-    ms_end = millis();
+    int taskwait = 200;
 
     // このタスクは周期的に実行される
-    vTaskDelayUntil(&xLastWakeTime, 10 / portTICK_PERIOD_MS);
+    vTaskDelayUntil(&xLastWakeTime, taskwait / portTICK_PERIOD_MS);
+  }
+
+}
+
+void canLoopTask(void *pvParameters)
+{
+  portTickType xLastWakeTime;
+  xLastWakeTime = xTaskGetTickCount();
+
+  while (1){
+
+
+    // このタスクは周期的に実行される
+    // int taskwait = 10;
+    // vTaskDelayUntil(&xLastWakeTime, taskwait / portTICK_PERIOD_MS);
   }
 }
 
 void otherLoopTask(void *pvParameters)
 {
-
   while(1){
-
-    canUnit.buf_send_show();
-    canComm.buf_send_show();
-
-    static int prebBtnC = -1;
-    int LCDflag = 0;
-    if( M5_getCntBtnC() == 2 || M5_getCntBtnC() != prebBtnC ){
-        LCDflag = 1;
-    }
-
-    prebBtnC = M5_getCntBtnC();
-    M5.Display.startWrite();
-    M5_LCD_loop( canvas );
-      canvas.pushSprite(&M5.Display,0,0);
-
-    M5.Display.endWrite();
+    main_disp_show();
     vTaskDelay(1);
   }
 }
@@ -124,7 +126,7 @@ void setup() {
   canvas.pushSprite(&M5.Display, 0, 0);
 
   M5.Display.startWrite();
-  M5.Display.setTextSize(2);               // テキストサイズを変更
+  M5.Display.setTextSize(2);               // �?キストサイズを変更
   M5.Display.setTextColor(GREEN);
   M5.Display.setCursor(0, 0);
   M5.Display.endWrite();
@@ -133,9 +135,10 @@ void setup() {
   canUnit.init( CanApp::HARD_CANBUS_UNIT );
   canComm.init( CanApp::HARD_COMM_MODULE );
 
-  TaskHandle_t h_canLoopTask, h_otherLoopTask;
-  xTaskCreatePinnedToCore(canLoopTask,   "CanLoopTask", 4096, NULL,  1, &h_canLoopTask, 0);
-  xTaskCreatePinnedToCore(otherLoopTask, "OtherLoopTask",   4096, NULL,  0, &h_otherLoopTask, 1);
+  TaskHandle_t h_canLoopTask, h_canLoopTask2, h_otherLoopTask;
+  // xTaskCreatePinnedToCore(canLoopTask2,   "CanLoopTask2", 4096, NULL,  1, &h_canLoopTask2, 1);
+  // xTaskCreatePinnedToCore(canLoopTask,   "CanLoopTask", 4096, NULL,  2, &h_canLoopTask, 0);
+  // //xTaskCreatePinnedToCore(otherLoopTask, "OtherLoopTask",   4096, NULL,  0, &h_otherLoopTask, 1);
 
   vTaskDelay(500);    
 
@@ -145,24 +148,62 @@ void setup() {
 
 void loop() {
 
+  static unsigned long txwait_millis = 0;
+  if(  millis() - prevmillis >= 5 ){
+
+    canComm.loop_recv();
+    //canUnit.loop_recv();
+    can_cnt++;
+
+    canComm.setTestFlag( can_tx_test , disp_show_mode );
+    canUnit.setTestFlag( can_tx_test2 , disp_show_mode );
+
+    M5.update(); 
+    M5_loop_BtnA(2);
+    M5_loop_BtnB(2);
+    M5_loop_BtnC(3); 
+
+    //ここではAとBは排他
+    if( M5_getCntBtnA() == 1 && M5_getCntPrevBtnA()==0 ){
+      M5_setCntBtnB(0);
+    }
+    else if( M5_getCntBtnB() == 1 && M5_getCntPrevBtnB()==0 ){
+      M5_setCntBtnA(0);
+    }
+
+    can_tx_test   = M5_getCntBtnA();
+    can_tx_test2   = M5_getCntBtnB();
+    disp_show_mode = M5_getCntBtnC();
 
 
-    // unsigned long start_ms, end_ms;
-    // static unsigned long diff_ms=0;
-    // start_ms = millis();
-    //M5.Display.startWrite();
-    //   canvas.fillScreen(RGBColor(0x003000));
-    //   canvas.setTextColor(WHITE);
-    //   canvas.setCursor(0, 20);
-    //   canvas.println( diff_ms + millis());
-    //M5_LCD_loop( canvas );
-    //  canvas.pushSprite(&M5.Display,0,0);
-    //M5.Display.endWrite();
-    // end_ms = millis();
-    // diff_ms = end_ms- start_ms;
+    if( M5_getCntBtnA() != M5_getCntPrevBtnA() ||
+        M5_getCntBtnB() != M5_getCntPrevBtnB() || 
+        M5_getCntBtnC() != M5_getCntPrevBtnC()){
+        LCDflag = 1;
+        txwait_millis = millis();
+    }
+    if( disp_show_mode == 2 ){
+        LCDflag = 1;
+    }
 
-//   delay(1000);                              // 1秒待つ
+    if( millis() - txwait_millis > 500 ){
+      canComm.loop_send();
+      //canUnit.loop_send();
+    }
 
-    vTaskDelay(1);    
+
+    int taskwait = 10;
+    //if( LCDflag ) taskwait = 100;
+
+    if( LCDflag && millis() - last_disp_ms > 100 && can_cnt > 20 ){
+      can_cnt = 0;
+      main_disp_show();
+    }
+
+//  }
+//    vTaskDelay(1);    
+   prevmillis = millis();
+
+  }
 
 }
